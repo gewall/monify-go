@@ -87,7 +87,7 @@ WITH m AS (
                   WHEN kind='expense' THEN -amount_minor ELSE 0 END) AS net
   FROM transactions
   WHERE deleted_at IS NULL
-    AND occurred_at >= (date_trunc('month', now()) - ($1 || ' months')::interval)::date
+    AND occurred_at >= (date_trunc('month', now()) - make_interval(months => $1))::date
     AND occurred_at <  date_trunc('month', now())::date
   GROUP BY 1
 )
