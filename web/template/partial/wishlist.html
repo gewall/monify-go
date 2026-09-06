@@ -1,0 +1,82 @@
+{{define "wish-list"}}
+<div id="wish-list">
+  <p class="muted">
+    Rata-rata surplus bulanan (3 bln terakhir): <strong>{{rupiah .View.AvgSurplus}}</strong>.
+    Mode: {{if .View.Sequential}}beli berurutan (nabung satu per satu sesuai prioritas){{else}}nabung paralel (tiap barang pakai seluruh surplus){{end}}.
+  </p>
+  <div class="wish-grid">
+    {{range .View.Estimates}}{{template "wish-card" (dict "Est" . "Mode" $.Mode)}}{{end}}
+    {{if not .View.Estimates}}<p class="muted">Belum ada barang di wishlist.</p>{{end}}
+  </div>
+</div>
+{{end}}
+
+{{define "wish-card"}}
+{{$e := .Est}}{{$it := .Est.Item}}
+<div class="card wish-card" id="wish-card-{{$it.ID}}">
+  <div class="head">
+    <strong>{{$it.Name}}</strong>
+    <span class="muted">prio {{$it.Priority}}</span>
+  </div>
+  <div class="bar"><span style="width:{{$it.ProgressPct}}%"></span></div>
+  <div class="muted">{{rupiah $it.SavedAmountMinor}} / {{rupiah $it.TargetAmountMinor}} ({{$it.ProgressPct}}%)</div>
+
+  <p class="estimate">
+    {{if eq (printf "%s" $it.Status) "bought"}}
+      ✅ Sudah dibeli
+    {{else if eq (printf "%s" $it.Status) "archived"}}
+      📦 Diarsipkan
+    {{else if $e.AlreadyFunded}}
+      🎉 Dana sudah cukup — tinggal beli!
+    {{else if $e.Estimable}}
+      🗓️ Perkiraan kebeli <strong>{{$e.ReadyDate.Format "Jan 2006"}}</strong> (~{{$e.MonthsNeeded}} bulan lagi)
+      {{if $.Mode}}{{end}}
+    {{else}}
+      ⚠️ Belum bisa diestimasi — surplus bulanan masih ≤ 0.
+    {{end}}
+  </p>
+  {{if $it.URL}}<a href="{{$it.URL}}" target="_blank" rel="noopener">Lihat barang →</a>{{end}}
+
+  <form class="row-form" style="margin:10px 0 0" hx-post="/wishlist/{{$it.ID}}/save"
+        hx-target="#wish-list" hx-swap="outerHTML" hx-include="#wish-mode"
+        hx-on::after-request="if(event.detail.successful) this.reset()">
+    <input type="text" name="amount" placeholder="Alokasikan tabungan" inputmode="numeric" required>
+    <button type="submit" class="link">Tambah tabungan</button>
+  </form>
+
+  <div class="actions" style="margin-top:8px">
+    <button class="link" hx-get="/wishlist/{{$it.ID}}/edit" hx-vals='{"mode":"{{$.Mode}}"}'
+            hx-target="#wish-card-{{$it.ID}}" hx-swap="outerHTML">Ubah</button>
+    {{if ne (printf "%s" $it.Status) "bought"}}
+    <button class="link" hx-post="/wishlist/{{$it.ID}}/status" hx-vals='{"status":"bought","mode":"{{$.Mode}}"}'
+            hx-target="#wish-list" hx-swap="outerHTML">Tandai dibeli</button>
+    {{end}}
+    <button class="link danger" hx-delete="/wishlist/{{$it.ID}}" hx-include="#wish-mode"
+            hx-target="#wish-list" hx-swap="outerHTML"
+            hx-confirm="Hapus dari wishlist?">Hapus</button>
+  </div>
+</div>
+{{end}}
+
+{{define "wish-card-edit"}}
+{{$it := .Item}}
+<div class="card wish-card" id="wish-card-{{$it.ID}}">
+  <form class="row-form" hx-put="/wishlist/{{$it.ID}}" hx-target="#wish-list" hx-swap="outerHTML"
+        hx-include="#wish-mode">
+    <input type="text" name="name" value="{{$it.Name}}" required>
+    <input type="text" name="target" value="{{rupiah $it.TargetAmountMinor}}" inputmode="numeric" required>
+    <input type="text" name="saved" value="{{rupiah $it.SavedAmountMinor}}" inputmode="numeric">
+    <input type="number" name="priority" value="{{$it.Priority}}" min="1" style="width:90px">
+    <input type="date" name="target_date" value="{{if $it.TargetDate}}{{$it.TargetDate.Format "2006-01-02"}}{{end}}">
+    <input type="url" name="url" value="{{$it.URL}}" placeholder="Link">
+    <select name="status">
+      <option value="active" {{if eq (printf "%s" $it.Status) "active"}}selected{{end}}>Aktif</option>
+      <option value="bought" {{if eq (printf "%s" $it.Status) "bought"}}selected{{end}}>Dibeli</option>
+      <option value="archived" {{if eq (printf "%s" $it.Status) "archived"}}selected{{end}}>Arsip</option>
+    </select>
+    <button type="submit">Simpan</button>
+    <button type="button" class="link" hx-get="/wishlist/list" hx-include="#wish-mode"
+            hx-target="#wish-list" hx-swap="outerHTML">Batal</button>
+  </form>
+</div>
+{{end}}

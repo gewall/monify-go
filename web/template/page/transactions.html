@@ -1,0 +1,53 @@
+{{define "title"}}Transaksi{{end}}
+{{define "content"}}
+<header class="page-head"><h1>Transaksi</h1></header>
+
+<form class="row-form card" hx-post="/transactions" hx-target="#tx-panel" hx-swap="outerHTML"
+      hx-on::after-request="if(event.detail.successful) this.reset()"
+      x-data="{kind:'expense'}">
+  <select name="kind" x-model="kind">
+    <option value="expense">Pengeluaran</option>
+    <option value="income">Pemasukan</option>
+    <option value="transfer">Transfer</option>
+  </select>
+  <input type="date" name="occurred_at" value="{{.Today}}" required>
+  <input type="text" name="amount" placeholder="Jumlah" inputmode="numeric" required>
+  <select name="account_id" required>
+    <option value="">Akun{{if false}}{{end}}</option>
+    {{range .Accounts}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
+  </select>
+  <select name="to_account_id" x-show="kind==='transfer'">
+    <option value="">Akun tujuan</option>
+    {{range .Accounts}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
+  </select>
+  <select name="category_id" x-show="kind!=='transfer'">
+    <option value="">— kategori —</option>
+    {{range .Categories}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
+  </select>
+  <input type="text" name="note" placeholder="Catatan">
+  <button type="submit">Simpan</button>
+</form>
+
+<form id="tx-filter" class="row-form" hx-get="/transactions/list" hx-target="#tx-panel"
+      hx-swap="outerHTML" hx-trigger="change, submit">
+  <input type="date" name="from" value="{{.Panel.FForm.From}}">
+  <input type="date" name="to" value="{{.Panel.FForm.To}}">
+  <select name="account_id">
+    <option value="">Semua akun</option>
+    {{range .Accounts}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
+  </select>
+  <select name="category_id">
+    <option value="">Semua kategori</option>
+    {{range .Categories}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
+  </select>
+  <select name="kind">
+    <option value="">Semua jenis</option>
+    <option value="income">Pemasukan</option>
+    <option value="expense">Pengeluaran</option>
+    <option value="transfer">Transfer</option>
+  </select>
+  <input type="hidden" name="page" value="1">
+</form>
+
+{{template "tx-panel" .Panel}}
+{{end}}

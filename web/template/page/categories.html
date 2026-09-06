@@ -1,0 +1,25 @@
+{{define "title"}}Kategori{{end}}
+{{define "content"}}
+<header class="page-head"><h1>Kategori</h1></header>
+
+<form class="row-form card" hx-post="/categories" hx-target="#category-rows" hx-swap="beforeend"
+      hx-on::after-request="if(event.detail.successful) this.reset()">
+  <input type="text" name="name" placeholder="Nama kategori" required>
+  <select name="kind">
+    <option value="expense">Pengeluaran</option>
+    <option value="income">Pemasukan</option>
+  </select>
+  <select name="parent_id">
+    <option value="">— tanpa induk —</option>
+    {{range .Parents}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
+  </select>
+  <button type="submit">Tambah</button>
+</form>
+
+<table class="grid">
+  <thead><tr><th>Nama</th><th>Jenis</th><th>Induk</th><th></th></tr></thead>
+  <tbody id="category-rows">
+    {{range .Categories}}{{template "category-row" .}}{{end}}
+  </tbody>
+</table>
+{{end}}

@@ -1,0 +1,48 @@
+{{define "title"}}Transaksi Berulang{{end}}
+{{define "content"}}
+<header class="page-head">
+  <h1>Transaksi Berulang</h1>
+</header>
+
+<form class="row-form card" hx-post="/recurring" hx-target="#rule-rows" hx-swap="beforeend"
+      hx-on::after-request="if(event.detail.successful) this.reset()"
+      x-data="{kind:'expense', freq:'monthly'}">
+  <input type="text" name="name" placeholder="Nama (mis. Langganan Netflix)" required>
+  <select name="kind" x-model="kind">
+    <option value="expense">Pengeluaran</option>
+    <option value="income">Pemasukan</option>
+    <option value="transfer">Transfer</option>
+  </select>
+  <input type="text" name="amount" placeholder="Jumlah" inputmode="numeric" required>
+  <select name="account_id" required>
+    <option value="">Akun</option>
+    {{range .Accounts}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
+  </select>
+  <select name="to_account_id" x-show="kind==='transfer'">
+    <option value="">Akun tujuan</option>
+    {{range .Accounts}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
+  </select>
+  <select name="category_id" x-show="kind!=='transfer'">
+    <option value="">— kategori —</option>
+    {{range .Categories}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
+  </select>
+  <select name="freq" x-model="freq">
+    <option value="monthly">Bulanan</option>
+    <option value="weekly">Mingguan</option>
+    <option value="daily">Harian</option>
+  </select>
+  <input type="number" name="interval" value="1" min="1" style="width:70px" title="setiap N periode">
+  <input type="number" name="day_of_month" min="1" max="31" placeholder="tgl" style="width:70px"
+         x-show="freq==='monthly'" title="tanggal dalam bulan">
+  <label class="chk">Mulai <input type="date" name="next_run_at" value="{{.Today}}" required></label>
+  <label class="chk">Selesai <input type="date" name="end_at"></label>
+  <input type="hidden" name="active" value="on">
+  <button type="submit">Tambah</button>
+</form>
+
+<form hx-post="/recurring/run" hx-target="#rule-table" hx-swap="outerHTML" style="margin-bottom:14px">
+  <button type="submit">Jalankan yang jatuh tempo sekarang</button>
+</form>
+
+{{template "rule-table" .}}
+{{end}}

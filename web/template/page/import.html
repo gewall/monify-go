@@ -1,0 +1,26 @@
+{{define "title"}}Impor / Ekspor{{end}}
+{{define "content"}}
+<header class="page-head"><h1>Impor / Ekspor</h1></header>
+
+<section class="card">
+  <h2>Ekspor transaksi (CSV)</h2>
+  <form class="row-form" method="get" action="/export/transactions.csv">
+    <label class="chk">Dari <input type="date" name="from"></label>
+    <label class="chk">Sampai <input type="date" name="to"></label>
+    <button type="submit">Unduh CSV</button>
+  </form>
+  <p class="muted">Kosongkan tanggal untuk mengekspor semua transaksi.</p>
+</section>
+
+<section class="card" style="margin-top:20px">
+  <h2>Impor transaksi (CSV)</h2>
+  <p class="muted">Kolom: <code>date, kind, amount, account, to_account, category, note</code>.
+     <code>kind</code> = income / expense / transfer. Nama akun &amp; kategori harus sudah ada.</p>
+  <form hx-post="/import/preview" hx-encoding="multipart/form-data"
+        hx-target="#import-area" hx-swap="innerHTML" class="row-form">
+    <input type="file" name="file" accept=".csv,text/csv" required>
+    <button type="submit">Pratinjau</button>
+  </form>
+  <div id="import-area" style="margin-top:16px"></div>
+</section>
+{{end}}

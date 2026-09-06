@@ -1,0 +1,37 @@
+{{define "account-row"}}
+<tr id="account-row-{{.ID}}">
+  <td>{{.Name}}{{if .Archived}} <span class="tag">arsip</span>{{end}}</td>
+  <td>{{.Type}}</td>
+  <td class="num">{{rupiah .InitialBalance}}</td>
+  <td class="num">{{rupiah .Balance}}</td>
+  <td class="actions">
+    <button class="link" hx-get="/accounts/{{.ID}}/edit"
+            hx-target="#account-row-{{.ID}}" hx-swap="outerHTML">Ubah</button>
+    <button class="link danger" hx-delete="/accounts/{{.ID}}"
+            hx-target="#account-row-{{.ID}}" hx-swap="outerHTML"
+            hx-confirm="Hapus akun ini?">Hapus</button>
+  </td>
+</tr>
+{{end}}
+
+{{define "account-row-edit"}}
+<tr id="account-row-{{.ID}}">
+  <td colspan="5">
+    <form class="row-form" hx-put="/accounts/{{.ID}}"
+          hx-target="#account-row-{{.ID}}" hx-swap="outerHTML">
+      <input type="text" name="name" value="{{.Name}}" required>
+      <select name="type">
+        <option value="cash" {{if eq (printf "%s" .Type) "cash"}}selected{{end}}>Tunai</option>
+        <option value="bank" {{if eq (printf "%s" .Type) "bank"}}selected{{end}}>Bank</option>
+        <option value="ewallet" {{if eq (printf "%s" .Type) "ewallet"}}selected{{end}}>E-wallet</option>
+        <option value="credit" {{if eq (printf "%s" .Type) "credit"}}selected{{end}}>Kartu Kredit</option>
+      </select>
+      <input type="text" name="initial_balance" value="{{rupiah .InitialBalance}}" inputmode="numeric">
+      <label class="chk"><input type="checkbox" name="archived" {{if .Archived}}checked{{end}}> Arsip</label>
+      <button type="submit">Simpan</button>
+      <button type="button" class="link" hx-get="/accounts/{{.ID}}/row"
+              hx-target="#account-row-{{.ID}}" hx-swap="outerHTML">Batal</button>
+    </form>
+  </td>
+</tr>
+{{end}}

@@ -1,0 +1,26 @@
+{{define "title"}}Akun{{end}}
+{{define "content"}}
+<header class="page-head"><h1>Akun</h1></header>
+
+<form class="row-form card" hx-post="/accounts" hx-target="#account-rows" hx-swap="beforeend"
+      hx-on::after-request="if(event.detail.successful) this.reset()">
+  <input type="text" name="name" placeholder="Nama akun" required>
+  <select name="type">
+    <option value="cash">Tunai</option>
+    <option value="bank">Bank</option>
+    <option value="ewallet">E-wallet</option>
+    <option value="credit">Kartu Kredit</option>
+  </select>
+  <input type="text" name="initial_balance" placeholder="Saldo awal" inputmode="numeric">
+  <button type="submit">Tambah</button>
+</form>
+
+<table class="grid">
+  <thead>
+    <tr><th>Nama</th><th>Tipe</th><th class="num">Saldo awal</th><th class="num">Saldo kini</th><th></th></tr>
+  </thead>
+  <tbody id="account-rows">
+    {{range .Accounts}}{{template "account-row" .}}{{end}}
+  </tbody>
+</table>
+{{end}}

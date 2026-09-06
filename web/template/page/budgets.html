@@ -1,0 +1,20 @@
+{{define "title"}}Budget{{end}}
+{{define "content"}}
+<header class="page-head"><h1>Budget <span class="muted">· {{.MonthLabel}}</span></h1></header>
+
+<form class="row-form" method="get" action="/budgets">
+  <label class="chk">Bulan
+    <input type="month" name="month" value="{{.Month}}" onchange="this.form.submit()">
+  </label>
+</form>
+
+<table class="grid">
+  <thead>
+    <tr><th>Kategori</th><th class="num">Terpakai</th><th>Budget</th><th>Progress</th></tr>
+  </thead>
+  <tbody>
+    {{range .Rows}}{{template "budget-row" .}}{{end}}
+    {{if not .Rows}}<tr><td colspan="4" class="muted">Belum ada kategori pengeluaran.</td></tr>{{end}}
+  </tbody>
+</table>
+{{end}}

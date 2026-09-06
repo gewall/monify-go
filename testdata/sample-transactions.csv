@@ -1,0 +1,6 @@
+date,kind,amount,account,to_account,category,note
+2026-09-01,income,8.500.000,Bank BCA,,Gaji,Gaji September
+2026-09-02,expense,55.000,Dompet Tunai,,Makan,Makan siang
+2026-09-03,expense,150.000,Bank BCA,,Transport,Bensin
+2026-09-05,transfer,2.000.000,Bank BCA,Dompet Tunai,,Tarik tunai
+2026-09-07,expense,199.000,Bank BCA,,Langganan,Netflix

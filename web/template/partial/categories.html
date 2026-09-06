@@ -1,0 +1,42 @@
+{{define "category-row"}}
+<tr id="category-row-{{.ID}}">
+  <td>{{if .ParentID}}<span class="indent">↳</span> {{end}}{{.Name}}</td>
+  <td>{{if eq (printf "%s" .Kind) "income"}}Pemasukan{{else}}Pengeluaran{{end}}</td>
+  <td>{{if .ParentID}}sub-kategori{{else}}—{{end}}</td>
+  <td class="actions">
+    <button class="link" hx-get="/categories/{{.ID}}/edit"
+            hx-target="#category-row-{{.ID}}" hx-swap="outerHTML">Ubah</button>
+    <button class="link danger" hx-delete="/categories/{{.ID}}"
+            hx-target="#category-row-{{.ID}}" hx-swap="outerHTML"
+            hx-confirm="Hapus kategori ini?">Hapus</button>
+  </td>
+</tr>
+{{end}}
+
+{{define "category-row-edit"}}
+<tr id="category-row-{{.ID}}">
+  <td colspan="4">
+    <form class="row-form" hx-put="/categories/{{.ID}}"
+          hx-target="#category-row-{{.ID}}" hx-swap="outerHTML">
+      <input type="text" name="name" value="{{.Name}}" required>
+      <select name="kind">
+        <option value="expense" {{if eq (printf "%s" .Kind) "expense"}}selected{{end}}>Pengeluaran</option>
+        <option value="income" {{if eq (printf "%s" .Kind) "income"}}selected{{end}}>Pemasukan</option>
+      </select>
+      <select name="parent_id">
+        <option value="">— tanpa induk —</option>
+        {{$pid := .SelectedParent}}
+        {{$self := .ID}}
+        {{range .Parents}}
+          {{if ne .ID $self}}
+          <option value="{{.ID}}" {{if eq .ID $pid}}selected{{end}}>{{.Name}}</option>
+          {{end}}
+        {{end}}
+      </select>
+      <button type="submit">Simpan</button>
+      <button type="button" class="link" hx-get="/categories/{{.ID}}/row"
+              hx-target="#category-row-{{.ID}}" hx-swap="outerHTML">Batal</button>
+    </form>
+  </td>
+</tr>
+{{end}}

@@ -1,0 +1,77 @@
+{{define "rule-table"}}
+<div id="rule-table">
+  {{if .Generated}}<p class="ok-note">{{.Generated}} transaksi dibuat.</p>{{end}}
+  <table class="grid">
+    <thead>
+      <tr><th>Nama</th><th>Jenis</th><th class="num">Jumlah</th><th>Jadwal</th><th>Berikutnya</th><th>Status</th><th></th></tr>
+    </thead>
+    <tbody id="rule-rows">
+      {{range .Rules}}{{template "rule-row" .}}{{end}}
+      {{if not .Rules}}<tr><td colspan="7" class="muted">Belum ada aturan berulang.</td></tr>{{end}}
+    </tbody>
+  </table>
+</div>
+{{end}}
+
+{{define "rule-freq"}}{{if eq (printf "%s" .Freq) "daily"}}Tiap {{.Interval}} hari{{else if eq (printf "%s" .Freq) "weekly"}}Tiap {{.Interval}} minggu{{else}}Tiap {{.Interval}} bulan{{end}}{{end}}
+
+{{define "rule-row"}}
+<tr id="rule-row-{{.ID}}">
+  <td>{{.Name}}</td>
+  <td>{{if eq (printf "%s" .Kind) "income"}}Masuk{{else if eq (printf "%s" .Kind) "expense"}}Keluar{{else}}Transfer{{end}}</td>
+  <td class="num">{{rupiah .AmountMinor}}</td>
+  <td>{{template "rule-freq" .}}</td>
+  <td>{{.NextRunAt.Format "02 Jan 2006"}}</td>
+  <td>{{if .Active}}Aktif{{else}}Nonaktif{{end}}</td>
+  <td class="actions">
+    <button class="link" hx-get="/recurring/{{.ID}}/edit"
+            hx-target="#rule-row-{{.ID}}" hx-swap="outerHTML">Ubah</button>
+    <button class="link danger" hx-delete="/recurring/{{.ID}}"
+            hx-target="#rule-row-{{.ID}}" hx-swap="outerHTML"
+            hx-confirm="Hapus aturan ini?">Hapus</button>
+  </td>
+</tr>
+{{end}}
+
+{{define "rule-row-edit"}}
+{{$r := .Rule}}
+<tr id="rule-row-{{$r.ID}}">
+  <td colspan="7">
+    <form class="row-form" hx-put="/recurring/{{$r.ID}}"
+          hx-target="#rule-row-{{$r.ID}}" hx-swap="outerHTML"
+          x-data="{kind:'{{printf "%s" $r.Kind}}', freq:'{{printf "%s" $r.Freq}}'}">
+      <input type="text" name="name" value="{{$r.Name}}" required>
+      <select name="kind" x-model="kind">
+        <option value="expense" {{if eq (printf "%s" $r.Kind) "expense"}}selected{{end}}>Pengeluaran</option>
+        <option value="income" {{if eq (printf "%s" $r.Kind) "income"}}selected{{end}}>Pemasukan</option>
+        <option value="transfer" {{if eq (printf "%s" $r.Kind) "transfer"}}selected{{end}}>Transfer</option>
+      </select>
+      <input type="text" name="amount" value="{{rupiah $r.AmountMinor}}" inputmode="numeric" required>
+      <select name="account_id" required>
+        {{range .Accounts}}<option value="{{.ID}}" {{if eq .ID $r.AccountID}}selected{{end}}>{{.Name}}</option>{{end}}
+      </select>
+      {{$to := $r.ToAccountIDStr}}
+      <select name="to_account_id" x-show="kind==='transfer'">
+        <option value="">Akun tujuan</option>
+        {{range .Accounts}}<option value="{{.ID}}" {{if eq .ID $to}}selected{{end}}>{{.Name}}</option>{{end}}
+      </select>
+      {{$cat := $r.CategoryIDStr}}
+      <select name="category_id" x-show="kind!=='transfer'">
+        <option value="">— kategori —</option>
+        {{range .Categories}}<option value="{{.ID}}" {{if eq .ID $cat}}selected{{end}}>{{.Name}}</option>{{end}}
+      </select>
+      <select name="freq" x-model="freq">
+        <option value="monthly" {{if eq (printf "%s" $r.Freq) "monthly"}}selected{{end}}>Bulanan</option>
+        <option value="weekly" {{if eq (printf "%s" $r.Freq) "weekly"}}selected{{end}}>Mingguan</option>
+        <option value="daily" {{if eq (printf "%s" $r.Freq) "daily"}}selected{{end}}>Harian</option>
+      </select>
+      <input type="number" name="interval" value="{{$r.Interval}}" min="1" style="width:70px">
+      <label class="chk">Berikutnya <input type="date" name="next_run_at" value="{{$r.NextRunAt.Format "2006-01-02"}}" required></label>
+      <label class="chk"><input type="checkbox" name="active" {{if $r.Active}}checked{{end}}> Aktif</label>
+      <button type="submit">Simpan</button>
+      <button type="button" class="link" hx-get="/recurring/{{$r.ID}}/row"
+              hx-target="#rule-row-{{$r.ID}}" hx-swap="outerHTML">Batal</button>
+    </form>
+  </td>
+</tr>
+{{end}}

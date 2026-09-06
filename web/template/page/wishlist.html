@@ -1,0 +1,29 @@
+{{define "title"}}Wishlist{{end}}
+{{define "content"}}
+<header class="page-head"><h1>Wishlist</h1></header>
+
+<form class="row-form card" hx-post="/wishlist" hx-target="#wish-list" hx-swap="outerHTML"
+      hx-include="#wish-mode"
+      hx-on::after-request="if(event.detail.successful) this.reset()">
+  <input type="text" name="name" placeholder="Nama barang" required>
+  <input type="text" name="target" placeholder="Harga" inputmode="numeric" required>
+  <input type="text" name="saved" placeholder="Sudah nabung" inputmode="numeric">
+  <input type="number" name="priority" placeholder="Prioritas (1=utama)" min="1" style="width:150px">
+  <input type="date" name="target_date" title="target tanggal (opsional)">
+  <input type="url" name="url" placeholder="Link (opsional)">
+  <button type="submit">Tambah</button>
+</form>
+
+<div class="row-form">
+  <input type="hidden" id="wish-mode" name="mode" value="{{.Mode}}">
+  <span class="muted">Mode:</span>
+  <button class="link" hx-get="/wishlist/list" hx-vals='{"mode":"parallel"}'
+          hx-target="#wish-list" hx-swap="outerHTML"
+          hx-on::after-request="document.getElementById('wish-mode').value='parallel'">Nabung paralel</button>
+  <button class="link" hx-get="/wishlist/list" hx-vals='{"mode":"sequential"}'
+          hx-target="#wish-list" hx-swap="outerHTML"
+          hx-on::after-request="document.getElementById('wish-mode').value='sequential'">Beli berurutan</button>
+</div>
+
+{{template "wish-list" .}}
+{{end}}

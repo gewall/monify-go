@@ -1,0 +1,14 @@
+{{define "title"}}Masuk{{end}}
+{{define "content"}}
+<form class="card auth-card" method="post" action="/login">
+  <h1>Masuk ke Monify</h1>
+  {{if .Error}}<p class="error">{{.Error}}</p>{{end}}
+  <label>Email
+    <input type="email" name="email" value="{{.Email}}" required autofocus>
+  </label>
+  <label>Password
+    <input type="password" name="password" required>
+  </label>
+  <button type="submit">Masuk</button>
+</form>
+{{end}}

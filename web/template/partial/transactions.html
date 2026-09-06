@@ -1,0 +1,80 @@
+{{define "tx-panel"}}
+<div id="tx-panel">
+  <table class="grid">
+    <thead>
+      <tr><th>Tanggal</th><th>Jenis</th><th>Akun</th><th>Kategori</th><th>Catatan</th><th class="num">Jumlah</th><th></th></tr>
+    </thead>
+    <tbody id="tx-rows">
+      {{range .Txns}}{{template "tx-row" .}}{{end}}
+      {{if not .Txns}}<tr><td colspan="7" class="muted">Belum ada transaksi.</td></tr>{{end}}
+    </tbody>
+  </table>
+  <div class="pager">
+    <span class="muted">{{.Total}} transaksi · hal {{.Page}}/{{.Pages}}</span>
+    <span>
+      <button class="link" {{if le .Page 1}}disabled{{end}}
+        hx-get="/transactions/list" hx-target="#tx-panel" hx-swap="outerHTML"
+        hx-include="#tx-filter" hx-vals='{"page": {{add .Page -1}}}'>← Sebelumnya</button>
+      <button class="link" {{if ge .Page .Pages}}disabled{{end}}
+        hx-get="/transactions/list" hx-target="#tx-panel" hx-swap="outerHTML"
+        hx-include="#tx-filter" hx-vals='{"page": {{add .Page 1}}}'>Berikutnya →</button>
+    </span>
+  </div>
+</div>
+{{end}}
+
+{{define "tx-row"}}
+<tr id="tx-row-{{.ID}}">
+  <td>{{.OccurredAt.Format "02 Jan 2006"}}</td>
+  <td>{{if eq (printf "%s" .Kind) "income"}}Masuk{{else if eq (printf "%s" .Kind) "expense"}}Keluar{{else}}Transfer{{end}}</td>
+  <td>{{.AccountName}}{{if .ToAccountName}} → {{.ToAccountName}}{{end}}</td>
+  <td>{{if .CategoryName}}{{.CategoryName}}{{else}}—{{end}}</td>
+  <td>{{if .Note}}{{.Note}}{{else}}—{{end}}</td>
+  <td class="num {{if eq (printf "%s" .Kind) "income"}}pos{{else if eq (printf "%s" .Kind) "expense"}}neg{{end}}">
+    {{if eq (printf "%s" .Kind) "expense"}}-{{end}}{{rupiah .AmountMinor}}
+  </td>
+  <td class="actions">
+    <button class="link" hx-get="/transactions/{{.ID}}/edit"
+            hx-target="#tx-row-{{.ID}}" hx-swap="outerHTML">Ubah</button>
+    <button class="link danger" hx-delete="/transactions/{{.ID}}"
+            hx-target="#tx-row-{{.ID}}" hx-swap="outerHTML"
+            hx-confirm="Hapus transaksi ini?">Hapus</button>
+  </td>
+</tr>
+{{end}}
+
+{{define "tx-row-edit"}}
+{{$tx := .Tx}}
+<tr id="tx-row-{{$tx.ID}}">
+  <td colspan="7">
+    <form class="row-form" hx-put="/transactions/{{$tx.ID}}"
+          hx-target="#tx-row-{{$tx.ID}}" hx-swap="outerHTML"
+          x-data="{kind:'{{printf "%s" $tx.Kind}}'}">
+      <select name="kind" x-model="kind">
+        <option value="expense" {{if eq (printf "%s" $tx.Kind) "expense"}}selected{{end}}>Pengeluaran</option>
+        <option value="income" {{if eq (printf "%s" $tx.Kind) "income"}}selected{{end}}>Pemasukan</option>
+        <option value="transfer" {{if eq (printf "%s" $tx.Kind) "transfer"}}selected{{end}}>Transfer</option>
+      </select>
+      <input type="date" name="occurred_at" value="{{$tx.OccurredAt.Format "2006-01-02"}}" required>
+      <input type="text" name="amount" value="{{rupiah $tx.AmountMinor}}" inputmode="numeric" required>
+      <select name="account_id" required>
+        {{range .Accounts}}<option value="{{.ID}}" {{if eq .ID $tx.AccountID}}selected{{end}}>{{.Name}}</option>{{end}}
+      </select>
+      <select name="to_account_id" x-show="kind==='transfer'">
+        <option value="">Akun tujuan</option>
+        {{$to := $tx.ToAccountIDStr}}
+        {{range .Accounts}}<option value="{{.ID}}" {{if eq .ID $to}}selected{{end}}>{{.Name}}</option>{{end}}
+      </select>
+      <select name="category_id" x-show="kind!=='transfer'">
+        <option value="">— kategori —</option>
+        {{$cat := $tx.CategoryIDStr}}
+        {{range .Categories}}<option value="{{.ID}}" {{if eq .ID $cat}}selected{{end}}>{{.Name}}</option>{{end}}
+      </select>
+      <input type="text" name="note" value="{{$tx.Note}}" placeholder="Catatan">
+      <button type="submit">Simpan</button>
+      <button type="button" class="link" hx-get="/transactions/{{$tx.ID}}/row"
+              hx-target="#tx-row-{{$tx.ID}}" hx-swap="outerHTML">Batal</button>
+    </form>
+  </td>
+</tr>
+{{end}}

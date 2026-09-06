@@ -1,0 +1,24 @@
+{{define "budget-row"}}
+<tr id="budget-row-{{.CategoryID}}">
+  <td>{{.CategoryName}}</td>
+  <td class="num">{{rupiah .SpentMinor}}</td>
+  <td>
+    <form class="row-form" style="margin:0" hx-post="/budgets"
+          hx-target="#budget-row-{{.CategoryID}}" hx-swap="outerHTML">
+      <input type="hidden" name="category_id" value="{{.CategoryID}}">
+      <input type="hidden" name="month" value="{{.Month}}">
+      <input type="text" name="amount" inputmode="numeric" style="min-width:120px"
+             value="{{if gt .AmountMinor 0}}{{rupiah .AmountMinor}}{{end}}"
+             placeholder="0 = tanpa budget">
+      <button type="submit" class="link">Simpan</button>
+    </form>
+  </td>
+  <td style="min-width:160px">
+    {{if gt .AmountMinor 0}}
+      <div class="bar"><span class="{{if gt .SpentMinor .AmountMinor}}over{{end}}"
+           style="width:{{pct .SpentMinor .AmountMinor}}%"></span></div>
+      <span class="muted">{{pct .SpentMinor .AmountMinor}}%</span>
+    {{else}}<span class="muted">—</span>{{end}}
+  </td>
+</tr>
+{{end}}

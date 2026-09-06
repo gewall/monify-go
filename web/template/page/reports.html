@@ -1,0 +1,51 @@
+{{define "title"}}Laporan{{end}}
+{{define "content"}}
+<header class="page-head no-print">
+  <h1>Laporan Bulanan</h1>
+</header>
+
+<form class="row-form no-print" method="get" action="/reports">
+  <label class="chk">Bulan <input type="month" name="month" value="{{.Month}}" onchange="this.form.submit()"></label>
+  <button type="button" onclick="window.print()">Cetak / Simpan PDF</button>
+</form>
+
+<article class="report">
+  <h1>Monify — Laporan {{.MonthLabel}}</h1>
+  <p class="muted">Dibuat {{.Generated}}</p>
+
+  <table class="grid">
+    <tbody>
+      <tr><th>Total saldo saat ini</th><td class="num">{{rupiah .Sum.TotalBalance}}</td></tr>
+      <tr><th>Pemasukan bulan ini</th><td class="num">{{rupiah .Sum.MonthIncome}}</td></tr>
+      <tr><th>Pengeluaran bulan ini</th><td class="num">{{rupiah .Sum.MonthExpense}}</td></tr>
+      <tr><th>Selisih</th><td class="num">{{rupiah .Sum.MonthNet}}</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Pengeluaran per kategori (terbesar)</h2>
+  <table class="grid">
+    <thead><tr><th>Kategori</th><th class="num">Jumlah</th></tr></thead>
+    <tbody>
+      {{range .Sum.TopExpenses}}<tr><td>{{.CategoryName}}</td><td class="num">{{rupiah .AmountMinor}}</td></tr>{{end}}
+      {{if not .Sum.TopExpenses}}<tr><td colspan="2" class="muted">Tidak ada.</td></tr>{{end}}
+    </tbody>
+  </table>
+
+  {{if .Sum.Budgets}}
+  <h2>Budget vs realisasi</h2>
+  <table class="grid">
+    <thead><tr><th>Kategori</th><th class="num">Budget</th><th class="num">Terpakai</th><th class="num">Sisa</th></tr></thead>
+    <tbody>
+      {{range .Sum.Budgets}}
+      <tr>
+        <td>{{.CategoryName}}</td>
+        <td class="num">{{rupiah .AmountMinor}}</td>
+        <td class="num">{{rupiah .SpentMinor}}</td>
+        <td class="num">{{rupiah (sub64 .AmountMinor .SpentMinor)}}</td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+  {{end}}
+</article>
+{{end}}

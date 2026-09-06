@@ -1,0 +1,48 @@
+services:
+  # Jalanin app di container: docker compose --profile app up -d
+  # (untuk dev lokal biasa cukup `make run` di host, tanpa profile ini)
+  monify:
+    build: .
+    profiles: ["app"]
+    ports:
+      - "8080:8080"
+    environment:
+      APP_ENV: development
+      APP_ADDR: ":8080"
+      # DB shared di VPS, dijangkau lewat SSH tunnel di host:
+      #   ssh -i C:\Users\USER\.ssh\personal-key.pem -L 5432:127.0.0.1:5432 gewall@137.59.126.64
+      DATABASE_URL: postgres://monify:JWpROCSgC3nNdmEPBMxAVu@host.docker.internal:5432/monify?sslmode=disable
+      SESSION_SECRET: dev-only-change-me-to-a-long-random-string
+      SESSION_SECURE: "false"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Postgres lokal — tidak dipakai path testing ini (DB ada di VPS).
+  # Aktifkan dengan: docker compose --profile local up
+  db:
+    image: postgres:16-alpine
+    profiles: ["local"]
+    environment:
+      POSTGRES_USER: monify
+      POSTGRES_PASSWORD: monify
+      POSTGRES_DB: monify
+    ports:
+      - "5432:5432"
+    volumes:
+      - monify_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U monify"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  adminer:
+    image: adminer:4
+    profiles: ["local", "app"]
+    ports:
+      - "8081:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  monify_pgdata:

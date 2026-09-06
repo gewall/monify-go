@@ -1,0 +1,47 @@
+{{define "import-preview"}}
+<form hx-post="/import/commit" hx-target="#import-area" hx-swap="innerHTML">
+  <p>{{.Importable}} baris siap diimpor (duplikat &amp; baris bermasalah tidak dicentang otomatis).</p>
+  <table class="grid">
+    <thead>
+      <tr><th>✓</th><th>Baris</th><th>Tanggal</th><th>Jenis</th><th class="num">Jumlah</th>
+          <th>Akun</th><th>Kategori</th><th>Catatan</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      {{range $i, $r := .Rows}}
+      <tr>
+        <td>
+          {{if $r.OK}}
+          <input type="checkbox" name="include" value="{{$i}}" {{if not $r.Duplicate}}checked{{end}}>
+          <input type="hidden" name="kind_{{$i}}" value="{{$r.Kind}}">
+          <input type="hidden" name="amount_{{$i}}" value="{{$r.AmountMinor}}">
+          <input type="hidden" name="account_{{$i}}" value="{{$r.AccountID}}">
+          <input type="hidden" name="to_account_{{$i}}" value="{{$r.ToAccountID}}">
+          <input type="hidden" name="category_{{$i}}" value="{{$r.CategoryID}}">
+          <input type="hidden" name="date_{{$i}}" value="{{$r.OccurredAt.Format "2006-01-02"}}">
+          <input type="hidden" name="note_{{$i}}" value="{{$r.Note}}">
+          {{end}}
+        </td>
+        <td>{{$r.LineNo}}</td>
+        <td>{{$r.Date}}</td>
+        <td>{{$r.Kind}}</td>
+        <td class="num">{{if $r.OK}}{{rupiah $r.AmountMinor}}{{else}}{{$r.Amount}}{{end}}</td>
+        <td>{{$r.Account}}{{if $r.ToAccount}} → {{$r.ToAccount}}{{end}}</td>
+        <td>{{$r.Category}}</td>
+        <td>{{$r.Note}}</td>
+        <td>
+          {{if not $r.OK}}<span class="num neg">{{$r.Err}}</span>
+          {{else if $r.Duplicate}}<span class="muted">duplikat</span>
+          {{else}}<span class="num pos">ok</span>{{end}}
+        </td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+  <button type="submit" style="margin-top:12px">Impor yang dicentang</button>
+</form>
+{{end}}
+
+{{define "import-result"}}
+<p class="ok-note">{{.Created}} transaksi diimpor.{{if .Failed}} {{.Failed}} gagal.{{end}}</p>
+<a href="/transactions">Lihat transaksi →</a>
+{{end}}

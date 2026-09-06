@@ -1,0 +1,66 @@
+{{define "title"}}Dashboard{{end}}
+{{define "content"}}
+<header class="page-head"><h1>Dashboard <span class="muted">· {{.MonthLabel}}</span></h1></header>
+
+<div class="card-grid">
+  <div class="card stat">
+    <div class="label">Total saldo</div>
+    <div class="value">{{rupiah .Sum.TotalBalance}}</div>
+  </div>
+  <div class="card stat">
+    <div class="label">Pemasukan bulan ini</div>
+    <div class="value pos">{{rupiah .Sum.MonthIncome}}</div>
+  </div>
+  <div class="card stat">
+    <div class="label">Pengeluaran bulan ini</div>
+    <div class="value neg">{{rupiah .Sum.MonthExpense}}</div>
+  </div>
+  <div class="card stat">
+    <div class="label">Selisih bulan ini</div>
+    <div class="value {{if lt .Sum.MonthNet 0}}neg{{else}}pos{{end}}">{{rupiah .Sum.MonthNet}}</div>
+  </div>
+  <div class="card stat">
+    <div class="label">Rata-rata surplus / bulan (3 bln)</div>
+    <div class="value {{if lt .AvgSurplus 0}}neg{{else}}pos{{end}}">{{rupiah .AvgSurplus}}</div>
+  </div>
+</div>
+
+<section class="card" style="margin-top:20px">
+  <h2>Pengeluaran terbesar</h2>
+  {{if not .Sum.TopExpenses}}<p class="muted">Belum ada pengeluaran bulan ini.</p>{{end}}
+  {{range .Sum.TopExpenses}}
+  <div class="progress-row">
+    <div class="head"><span>{{.CategoryName}}</span><span>{{rupiah .AmountMinor}}</span></div>
+    <div class="bar"><span style="width:{{pct .AmountMinor $.MaxExpense}}%"></span></div>
+  </div>
+  {{end}}
+</section>
+
+<section class="card" style="margin-top:20px">
+  <h2>Tagihan mendekati jatuh tempo</h2>
+  {{if not .Upcoming}}<p class="muted">Tidak ada dalam 7 hari ke depan.</p>{{end}}
+  {{range .Upcoming}}
+  <div class="progress-row">
+    <div class="head">
+      <span>{{.Name}} <span class="muted">· {{.NextRunAt.Format "02 Jan"}}</span></span>
+      <span>{{rupiah .AmountMinor}}</span>
+    </div>
+  </div>
+  {{end}}
+</section>
+
+<section class="card" style="margin-top:20px">
+  <h2>Progress budget</h2>
+  {{if not .Sum.Budgets}}<p class="muted">Belum ada budget. <a href="/budgets">Atur budget →</a></p>{{end}}
+  {{range .Sum.Budgets}}
+  <div class="progress-row">
+    <div class="head">
+      <span>{{.CategoryName}}</span>
+      <span>{{rupiah .SpentMinor}} / {{rupiah .AmountMinor}}</span>
+    </div>
+    <div class="bar"><span class="{{if gt .SpentMinor .AmountMinor}}over{{end}}"
+         style="width:{{pct .SpentMinor .AmountMinor}}%"></span></div>
+  </div>
+  {{end}}
+</section>
+{{end}}

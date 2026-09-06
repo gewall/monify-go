@@ -1,0 +1,41 @@
+{{define "base.html"}}<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{block "title" .}}Monify{{end}} · Monify</title>
+  <link rel="stylesheet" href="/static/css/app.css">
+  <script src="/static/js/htmx.min.js" defer></script>
+  <script src="/static/js/alpine.min.js" defer></script>
+</head>
+<body>
+{{if .Auth}}
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">Monify</div>
+      <nav>
+        <a href="/">Dashboard</a>
+        <a href="/accounts">Akun</a>
+        <a href="/categories">Kategori</a>
+        <a href="/transactions">Transaksi</a>
+        <a href="/budgets">Budget</a>
+        <a href="/recurring">Berulang</a>
+        <a href="/wishlist">Wishlist</a>
+        <a href="/reports">Laporan</a>
+        <a href="/import">Impor / Ekspor</a>
+      </nav>
+      <form method="post" action="/logout" class="logout">
+        <button type="submit">Keluar</button>
+      </form>
+    </aside>
+    <main class="content">
+      {{block "content" .}}{{end}}
+    </main>
+  </div>
+{{else}}
+  <main class="auth-shell">
+    {{block "content" .}}{{end}}
+  </main>
+{{end}}
+</body>
+</html>{{end}}
