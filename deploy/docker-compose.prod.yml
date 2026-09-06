@@ -1,63 +1,40 @@
 services:
-  # Pre-built image from GitHub Actions (ghcr.io). Override MONIFY_IMAGE to pin a tag:
-  #   MONIFY_IMAGE=ghcr.io/<owner>/monify:sha-abc1234
+  # Pre-built image from GitHub Actions (ghcr.io/gewall/monify-go).
+  # Override MONIFY_IMAGE in .env to pin a tag:
+  #   MONIFY_IMAGE=ghcr.io/gewall/monify-go:sha-abc1234
   app:
-    image: ${MONIFY_IMAGE:-ghcr.io/alginugraha/monify:latest}
+    image: ${MONIFY_IMAGE:-ghcr.io/gewall/monify-go:latest}
     pull_policy: always
     restart: unless-stopped
     environment:
       APP_ENV: production
       APP_ADDR: ":8080"
-      DATABASE_URL: ${DATABASE_URL}
-      SESSION_SECRET: ${SESSION_SECRET}
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
+      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET}
       SESSION_SECURE: "true"
+    ports:
+      # Loopback only; the host nginx terminates TLS and reverse-proxies here.
+      - "127.0.0.1:${APP_PORT:-8090}:8080"
     depends_on:
       migrate:
         condition: service_completed_successfully
-      db:
-        condition: service_healthy
+    networks:
+      - shared-db
 
-  # One-shot: applies embedded goose migrations, then exits.
+  # One-shot: applies embedded goose migrations against DATABASE_URL, then exits.
   migrate:
-    image: ${MONIFY_IMAGE:-ghcr.io/alginugraha/monify:latest}
+    image: ${MONIFY_IMAGE:-ghcr.io/gewall/monify-go:latest}
     command: ["migrate"]
+    pull_policy: always
     restart: "no"
     environment:
-      DATABASE_URL: ${DATABASE_URL}
-      SESSION_SECRET: ${SESSION_SECRET}
-    depends_on:
-      db:
-        condition: service_healthy
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL}
+      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET}
+    networks:
+      - shared-db
 
-  db:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-monify}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB:-monify}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-monify}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - app
-
-volumes:
-  pgdata:
-  caddy_data:
-  caddy_config:
+# Postgres is the shared stack (~/infra/postgres). The app reaches it as host
+# "postgres" over this external network. No bundled db service here.
+networks:
+  shared-db:
+    external: true
