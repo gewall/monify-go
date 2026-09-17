@@ -12,6 +12,7 @@ Layered / hexagonal-lite:
 - `internal/platform` — money type, session, validate helpers
 - `web/` — templates + vendored static assets (no CDN)
 - `migrations/` — goose SQL migrations
+- `internal/http/apihandler` — token-authenticated JSON API for external integrations (`/api/v1/*`, docs in `docs/API.md`), thin JSON wrapper over the same `internal/service` layer the htmx handlers use
 
 `cmd/monify/main.go` wires concrete implementations into services (manual DI).
 
@@ -28,6 +29,7 @@ Layered / hexagonal-lite:
 - `make up` — start Postgres + Adminer
 - `make migrate` — run migrations (needs `goose`)
 - `make seed-user` — create the first user
+- `make api-key EMAIL=... NAME=...` — mint an external-API bearer token (see `docs/API.md`)
 - `make run` / `make test` / `make lint`
 
 ## Plan
@@ -44,6 +46,7 @@ Done:
 - Fase 6 — Wishlist + affordability estimate (`domain.EstimateWishlist`): parallel vs sequential mode, "allocate savings", mark bought
 - Fase 7 — CSV import (upload → preview with dup detection → commit selected) + CSV export + print-friendly /reports
 - Fase 9 — Dockerfile (multi-stage, embeds web/), deploy/ (prod compose + Caddy + pg_dump backup.sh)
+- External API — token-authenticated JSON REST API (`/api/v1/*`) for accounts, categories, transactions, budgets, wishlist, dashboard. Bearer tokens minted via `cmd/monify apikey create`, hashed (sha256) in `api_keys` table, `RequireAPIKey`/`CORS` middleware (separate from the cookie-session/SameOrigin web UI). Not yet exposed: recurring rules, CSV import/export. Docs: `docs/API.md`.
 
 Deferred: Fase 8 (offline/PWA + sync) — user chose "online only dulu". Entities already carry uuid + updated_at + deleted_at so it can be added without migration churn.
 

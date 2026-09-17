@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/alginugraha/monify/internal/http/apihandler"
 	"github.com/alginugraha/monify/internal/http/handler"
 	appmw "github.com/alginugraha/monify/internal/http/middleware"
 	"github.com/alginugraha/monify/internal/http/render"
@@ -45,6 +46,8 @@ func NewRouter(d Deps) http.Handler {
 	recurringSvc := service.NewRecurringService(postgres.NewRecurringRepo(d.Pool))
 	wishlistSvc := service.NewWishlistService(
 		postgres.NewWishlistRepo(d.Pool), postgres.NewReportRepo(d.Pool))
+	userRepo := postgres.NewUserRepo(d.Pool)
+	apiKeySvc := service.NewAPIKeyService(postgres.NewAPIKeyRepo(d.Pool), userRepo)
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -74,6 +77,21 @@ func NewRouter(d Deps) http.Handler {
 		handler.NewWishlist(d.Render, wishlistSvc).Routes(pr)
 		handler.NewImportExport(d.Render, importSvc, txSvc).Routes(pr)
 		handler.NewReports(d.Render, reportSvc).Routes(pr)
+	})
+
+	// Token-authenticated JSON API for external integrations (docs/API.md).
+	// Separate from the group above: no session cookie, no SameOrigin check
+	// (a bearer token is meaningless to forge via CSRF), CORS opened instead.
+	r.Route("/api/v1", func(ar chi.Router) {
+		ar.Use(appmw.CORS)
+		ar.Use(appmw.RequireAPIKey(apiKeySvc))
+
+		apihandler.NewAccounts(accountSvc).Routes(ar)
+		apihandler.NewCategories(categorySvc).Routes(ar)
+		apihandler.NewTransactions(txSvc).Routes(ar)
+		apihandler.NewBudgets(budgetSvc).Routes(ar)
+		apihandler.NewWishlist(wishlistSvc).Routes(ar)
+		apihandler.NewReports(reportSvc).Routes(ar)
 	})
 
 	return r

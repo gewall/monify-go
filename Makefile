@@ -7,7 +7,7 @@ export
 GOOSE_DRIVER := postgres
 DATABASE_URL ?= postgres://monify:monify@localhost:5432/monify?sslmode=disable
 
-.PHONY: up down run build migrate migrate-down seed-user sqlc test lint tidy
+.PHONY: up down run build migrate migrate-down seed-user api-key sqlc test lint tidy
 
 up:
 	docker compose up -d
@@ -30,6 +30,10 @@ migrate-down:
 
 seed-user:
 	go run ./cmd/monify seed-user
+
+# Usage: make api-key EMAIL=me@example.com NAME="my integration"
+api-key:
+	go run ./cmd/monify apikey create "$(EMAIL)" "$(NAME)"
 
 sqlc:
 	sqlc generate

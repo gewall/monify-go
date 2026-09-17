@@ -29,3 +29,10 @@ type CategoryRepo interface {
 	Update(ctx context.Context, c domain.Category) error
 	SoftDelete(ctx context.Context, id string) error
 }
+
+// APIKeyRepo is the persistence port for external-API bearer tokens.
+type APIKeyRepo interface {
+	Create(ctx context.Context, k domain.APIKey) (domain.APIKey, error)
+	ByHash(ctx context.Context, hash string) (domain.APIKey, error)
+	Touch(ctx context.Context, id string) error
+}

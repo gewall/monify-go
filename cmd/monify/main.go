@@ -43,6 +43,12 @@ func main() {
 				os.Exit(1)
 			}
 			return
+		case "apikey":
+			if err := apiKeyCmd(logger, os.Args[2:]); err != nil {
+				logger.Error("apikey failed", "err", err)
+				os.Exit(1)
+			}
+			return
 		}
 	}
 
@@ -194,5 +200,45 @@ func seedUser(logger *slog.Logger) error {
 		return err
 	}
 	logger.Info("user created", "id", u.ID, "email", u.Email)
+	return nil
+}
+
+// apiKeyCmd handles `monify apikey create <email> <name>`, minting a new
+// external-API bearer token for an existing user. The plaintext token is
+// printed once and cannot be recovered afterwards.
+func apiKeyCmd(logger *slog.Logger, args []string) error {
+	if len(args) < 1 || args[0] != "create" {
+		return errors.New(`usage: monify apikey create <email> <name>`)
+	}
+	if len(args) != 3 {
+		return errors.New(`usage: monify apikey create <email> <name>`)
+	}
+	email, name := args[1], args[2]
+
+	cfg, err := config.Load()
+	if err != nil {
+		return err
+	}
+	ctx := context.Background()
+	pool, err := postgres.Connect(ctx, cfg.DatabaseURL)
+	if err != nil {
+		return err
+	}
+	defer pool.Close()
+
+	users := postgres.NewUserRepo(pool)
+	u, err := users.ByEmail(ctx, email)
+	if err != nil {
+		return fmt.Errorf("lookup user %q: %w", email, err)
+	}
+
+	keys := service.NewAPIKeyService(postgres.NewAPIKeyRepo(pool), users)
+	_, token, err := keys.Create(ctx, u.ID, name)
+	if err != nil {
+		return err
+	}
+	logger.Info("api key created", "user", u.Email, "name", name)
+	fmt.Println("Token (save it now, it will not be shown again):")
+	fmt.Println(token)
 	return nil
 }
