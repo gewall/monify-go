@@ -56,6 +56,17 @@ docker compose -f docker-compose.prod.yml up -d      # re-runs migrate, restarts
 
 Pin a specific build: set `MONIFY_IMAGE=ghcr.io/gewall/monify-go:sha-abc1234` in `.env`.
 
+### Auto-deploy
+
+`auto-pull.sh` polls GHCR and redeploys only when the `:latest` image actually
+changed (silent no-op otherwise). Installed via cron on the VPS, every 5 min:
+
+```sh
+crontab -e
+# add:
+*/5 * * * * /home/gewall/apps/monify/auto-pull.sh >> /var/log/monify-autopull.log 2>&1
+```
+
 ## Backups
 
 The shared Postgres stack already runs a nightly `pg_dumpall`. `backup.sh` is an
